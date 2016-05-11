@@ -72,7 +72,7 @@ public class SamplePropNetStateMachine extends StateMachine {
      * Computes if the state is terminal. Should return the value
      * of the terminal proposition for the state.
      *
-     * Andrew - Not sure if this works
+     * Andrew - Not sure if this works (> 50%)
      */
     @Override
     public boolean isTerminal(MachineState state) {
@@ -176,33 +176,22 @@ public class SamplePropNetStateMachine extends StateMachine {
     /**
      * Computes the next state given state and the list of moves.
      * 
-     * Andrew - uncompleted and also need to fix error checking to be faster
+     * Andrew - uncompleted 
      */
     @Override
     public MachineState getNextState(MachineState state, List<Move> moves)
             throws TransitionDefinitionException {
-        markBasePropsForState(state);
         markInputPropsForJointMove(moves);
-        
-        // really slow error checking
-        try {
-            for (int i = 0; i < moves.size(); i++) {
-                Role currRole = roles.get(i);
-                Move currMove = moves.get(i);
-                List<Move> currLegals = getLegalMoves(state, currRole);
-                if (!currLegals.contains(currMove)) {
-                    PRINT("Invalid move: " + currMove);
-                    throw new TransitionDefinitionException(state, moves);
-                }
+        markBasePropsForState(state);
+        Set<Proposition> nextStateProps = new HashSet<Proposition>();
+        ArrayList<Proposition> currBaseProps = new ArrayList<Proposition>(propNet.getBasePropositions().values());
+        for (Proposition prop : currBaseProps) {
+            boolean val = getComponentVal(prop);
+            prop.setValue(val);
+            if (val) {
+                nextStateProps.add(prop);
             }
-            PRINT("All moves are valid");        
-        } catch (MoveDefinitionException e) {
-            // don't do anything with e for now
         }
-
-
-
-
         return null;
     }
 
