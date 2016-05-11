@@ -98,6 +98,10 @@ public final class MCTSGamer extends SampleGamer
     TreeNode currRootNode = null; 
     int ourTurnIndex = -1;
 
+
+    
+    
+
     @Override
     public void stateMachineMetaGame(long timeout) throws TransitionDefinitionException, MoveDefinitionException, GoalDefinitionException
     {

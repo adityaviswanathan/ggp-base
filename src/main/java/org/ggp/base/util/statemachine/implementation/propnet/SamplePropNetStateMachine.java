@@ -43,9 +43,9 @@ public class SamplePropNetStateMachine extends StateMachine {
     public void initialize(List<Gdl> description) {
         try {
             propNet = OptimizingPropNetFactory.create(description);
+            propNet.renderToFile("test.dot");
             roles = propNet.getRoles();
-            ordering = getOrdering();
-            System.out.println(ordering.toString());
+            ordering = getOrdering(); // compute the topological ordering here
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
