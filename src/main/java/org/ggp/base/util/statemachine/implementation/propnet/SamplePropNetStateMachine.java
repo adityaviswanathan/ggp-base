@@ -4,14 +4,18 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
+
+import java.lang.*;
 
 import org.ggp.base.util.gdl.grammar.Gdl;
 import org.ggp.base.util.gdl.grammar.GdlConstant;
 import org.ggp.base.util.gdl.grammar.GdlRelation;
 import org.ggp.base.util.gdl.grammar.GdlSentence;
 import org.ggp.base.util.propnet.architecture.Component;
+import org.ggp.base.util.propnet.architecture.components.*;
 import org.ggp.base.util.propnet.architecture.PropNet;
 import org.ggp.base.util.propnet.architecture.components.Proposition;
 import org.ggp.base.util.propnet.factory.OptimizingPropNetFactory;
@@ -24,15 +28,23 @@ import org.ggp.base.util.statemachine.exceptions.MoveDefinitionException;
 import org.ggp.base.util.statemachine.exceptions.TransitionDefinitionException;
 import org.ggp.base.util.statemachine.implementation.prover.query.ProverQueryBuilder;
 
-
 @SuppressWarnings("unused")
 public class SamplePropNetStateMachine extends StateMachine {
+    
+    // print wrappers
+    private static final boolean LOGGING = true;
+    private void LOG(String str) { if (LOGGING) System.out.println(str); }
+    private void PRINT(String str) { System.out.println(str); }
+
     /** The underlying proposition network  */
     private PropNet propNet;
     /** The topological ordering of the propositions */
     private List<Proposition> ordering;
     /** The player roles */
     private List<Role> roles;
+
+
+    private MachineState initialState = null;
 
     /**
      * Initializes the PropNetStateMachine. You should compute the topological
@@ -43,8 +55,8 @@ public class SamplePropNetStateMachine extends StateMachine {
     public void initialize(List<Gdl> description) {
         try {
             propNet = OptimizingPropNetFactory.create(description);
-            propNet.renderToFile("test.dot");
             roles = propNet.getRoles();
+            initialState = setInitialMachineState();
             ordering = getOrdering(); // compute the topological ordering here
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
@@ -76,14 +88,23 @@ public class SamplePropNetStateMachine extends StateMachine {
     }
 
     /**
+     * Sets truth value of init proposition to true and then computes
+     * the resulting State. Called only once during initialization.
+     */
+    private MachineState setInitialMachineState() {
+        Proposition initProp = propNet.getInitProposition();
+        initProp.setValue(true);
+        return getStateFromBase();
+    }
+
+    /**
      * Returns the initial state. The initial state can be computed
      * by only setting the truth value of the INIT proposition to true,
      * and then computing the resulting state.
      */
     @Override
     public MachineState getInitialState() {
-        // TODO: Compute the initial state.
-        return null;
+        return initialState;
     }
 
     /**
@@ -92,7 +113,6 @@ public class SamplePropNetStateMachine extends StateMachine {
     @Override
     public List<Move> findActions(Role role)
             throws MoveDefinitionException {
-        // TODO: Compute legal moves.
         return null;
     }
 
@@ -102,7 +122,6 @@ public class SamplePropNetStateMachine extends StateMachine {
     @Override
     public List<Move> getLegalMoves(MachineState state, Role role)
             throws MoveDefinitionException {
-        // TODO: Compute legal moves.
         return null;
     }
 
@@ -132,19 +151,72 @@ public class SamplePropNetStateMachine extends StateMachine {
      */
     public List<Proposition> getOrdering()
     {
-        // List to contain the topological ordering.
-        List<Proposition> order = new LinkedList<Proposition>();
-
-        // All of the components in the PropNet
         List<Component> components = new ArrayList<Component>(propNet.getComponents());
-
-        // All of the propositions in the PropNet.
-        List<Proposition> propositions = new ArrayList<Proposition>(propNet.getPropositions());
-
-        // TODO: Compute the topological ordering.
-
-        return order;
+        List<Proposition> props = new ArrayList<Proposition>(propNet.getPropositions());
+        List<Proposition> result = buildOrdering(propNet.getInitProposition(), new HashSet<Proposition>());
+        PRINT("Ordering of propositions of size: " + result.size());
+        PRINT("Total propositions: " + propNet.getPropositions().size());
+        PRINT("Total base propositions: " + propNet.getBasePropositions().size());
+        PRINT("Total goal propositions: " + propNet.getGoalPropositions().size());
+        int validNodes = 0;
+        int foundValidNodes = 0;
+        for (Proposition prop : propNet.getPropositions()) {
+            if (propNet.getInputPropositions().get(prop.getName()) == null 
+                && propNet.getBasePropositions().get(prop.getName()) == null) {
+                if (result.contains(prop)) {
+                    foundValidNodes++;
+                } else {
+                    PRINT(prop.getName().toString() + " inputs: " + prop.getInputs().size() + " outputs: " + prop.getOutputs().size());
+                }
+                validNodes++;
+            }
+        }
+        PRINT("Valid nodes: " + validNodes);
+        PRINT("Found valid nodes: " + foundValidNodes);
+        int numLegalProps = 0;
+        for (Role role : roles) {
+            numLegalProps += propNet.getLegalPropositions().get(role).size();
+        }
+        PRINT("Number of legal props: " + numLegalProps);
+        return result;
     }
+
+    // doesn't work but should recursively build ordering from start node
+    // maybe possibly do it from the end node
+    private List<Proposition> buildOrdering(Component currComp, Set<Proposition> seenProps)
+    {
+        List<Proposition> currOrdering = new ArrayList<Proposition>();
+        if (currComp instanceof Proposition) {
+            Proposition currProp = (Proposition)currComp;
+            if (seenProps.contains(currProp)) {
+                PRINT("Seen this prop already");
+                return new ArrayList<Proposition>();
+            } else {
+                seenProps.add(currProp);
+            }
+            if (propNet.getInputPropositions().get(currProp.getName()) != null) { 
+                //PRINT("Current proposition is an input proposition"); 
+            } else if (propNet.getBasePropositions().get(currProp.getName()) != null) { 
+                //PRINT("Current proposition is a base proposition"); 
+            } else { 
+                currOrdering.add(currProp); 
+            }
+            if (propsAreEqual(currProp, propNet.getTerminalProposition())) {
+                PRINT("Reached final proposition");
+            }
+        }
+        List<Component> outputComponents = new ArrayList<Component>(currComp.getOutputs());
+        for (Component output : outputComponents) {
+            List<Proposition> subOrdering = buildOrdering(output, seenProps);
+            currOrdering.addAll(subOrdering);
+        }
+        return currOrdering;
+    }
+
+    private boolean propsAreEqual(Proposition p1, Proposition p2) {
+        return p1.getName().toString().equals(p2.getName().toString());
+    }
+
 
     /* Already implemented for you */
     @Override
@@ -183,7 +255,7 @@ public class SamplePropNetStateMachine extends StateMachine {
      * @param p
      * @return a PropNetMove
      */
-    public static Move getMoveFromProposition(Proposition p)
+    public static Move getMoveFromProposition(Proposition p) 
     {
         return new Move(p.getName().get(1));
     }

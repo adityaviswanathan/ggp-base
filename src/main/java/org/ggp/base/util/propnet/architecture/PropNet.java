@@ -113,7 +113,6 @@ public final class PropNet
      */
     public PropNet(List<Role> roles, Set<Component> components)
     {
-
         this.roles = roles;
         this.components = components;
         this.propositions = recordPropositions();
@@ -263,6 +262,9 @@ public final class PropNet
         return sb.toString();
     }
 
+    // directory in ggp-base with where the .dot files produced by renderToFile are store
+    private static final String GRAPHS_DIRNAME = "propnetGraphs"; 
+
     /**
      * Outputs the propnet in .dot format to a particular file.
      * This can be viewed with tools like Graphviz and ZGRViewer.
@@ -271,7 +273,7 @@ public final class PropNet
      */
     public void renderToFile(String filename) {
         try {
-            File f = new File(filename);
+            File f = new File(GRAPHS_DIRNAME + "/" + filename);
             FileOutputStream fos = new FileOutputStream(f);
             OutputStreamWriter fout = new OutputStreamWriter(fos, "UTF-8");
             fout.write(toString());

@@ -23,18 +23,16 @@ import org.ggp.base.util.statemachine.exceptions.TransitionDefinitionException;
 import org.ggp.base.util.statemachine.Role;
 import org.ggp.base.util.statemachine.Move;
 
-import org.ggp.base.util.propnet.factory.OptimizingPropNetFactory;
-
+// class that tests out propnet
 public final class PropNetGamer extends StateMachineGamer
 {
 
-    private SamplePropNetStateMachine sharedStateMachine = null;
+    private StateMachine sharedStateMachine = null;
 
     @Override
     public void stateMachineMetaGame(long timeout) throws TransitionDefinitionException, MoveDefinitionException, GoalDefinitionException
     {
-        // initialize shared PropNetStateMachine
-        sharedStateMachine = (SamplePropNetStateMachine)getStateMachine();
+        sharedStateMachine = getStateMachine();
     }
 
     /**
@@ -56,41 +54,17 @@ public final class PropNetGamer extends StateMachineGamer
         return selection;
     }
 
-    /** This will currently return "SampleGamer"
-     * If you are working on : public abstract class MyGamer extends SampleGamer
-     * Then this function would return "MyGamer"
-     */
+    // Overrides
     @Override
-    public String getName() {
-        return getClass().getSimpleName();
-    }
-
-    // This is the default State Machine
+    public String getName() { return getClass().getSimpleName(); }
     @Override
-    public StateMachine getInitialStateMachine() {
-        return new SamplePropNetStateMachine();
-    }
-
-    // This is the default Sample Panel
+    public StateMachine getInitialStateMachine() { return new CachedStateMachine(new SamplePropNetStateMachine()); }
     @Override
-    public DetailPanel getDetailPanel() {
-        return new SimpleDetailPanel();
-    }
-
-
-
+    public DetailPanel getDetailPanel() { return new SimpleDetailPanel(); }
     @Override
-    public void stateMachineStop() {
-        // Sample gamers do no special cleanup when the match ends normally.
-    }
-
+    public void stateMachineStop() { }
     @Override
-    public void stateMachineAbort() {
-        // Sample gamers do no special cleanup when the match ends abruptly.
-    }
-
+    public void stateMachineAbort() { }
     @Override
-    public void preview(Game g, long timeout) throws GamePreviewException {
-        // Sample gamers do no game previewing.
-    }
+    public void preview(Game g, long timeout) throws GamePreviewException { }
 }

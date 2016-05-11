@@ -38,6 +38,8 @@ public final class AlphaBetaGamer extends SampleGamer
         List<Move> moves = getStateMachine().findLegals(getRole(), getCurrentState());
 
         Move selection = moves.get(0);
+
+        System.out.println(getStateMachine().getInitialState().toString());
         
         //only do search if there is more than one move to choose from
         if (moves.size() > 1)
