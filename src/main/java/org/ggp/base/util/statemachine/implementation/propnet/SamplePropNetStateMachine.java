@@ -183,16 +183,14 @@ public class SamplePropNetStateMachine extends StateMachine {
             throws TransitionDefinitionException {
         markInputPropsForJointMove(moves);
         markBasePropsForState(state);
-        Set<Proposition> nextStateProps = new HashSet<Proposition>();
         ArrayList<Proposition> currBaseProps = new ArrayList<Proposition>(propNet.getBasePropositions().values());
+        HashSet<GdlSentence> nextStateContents = new HashSet<GdlSentence>();
         for (Proposition prop : currBaseProps) {
             boolean val = getComponentVal(prop);
             prop.setValue(val);
-            if (val) {
-                nextStateProps.add(prop);
-            }
+            if (val) nextStateContents.add(prop.getName());
         }
-        return null;
+        return new MachineState(nextStateContents);
     }
 
     /**
@@ -300,6 +298,7 @@ public class SamplePropNetStateMachine extends StateMachine {
         else if (comp instanceof Constant) {
             Constant constant = (Constant)comp;
             PRINT("Woah haven't seen a constant before: " + constant.toString());
+            PRINT("Constant has " + comp.getInputs().size() + " inputs");
             return constant.getValue();
         }
         return false;

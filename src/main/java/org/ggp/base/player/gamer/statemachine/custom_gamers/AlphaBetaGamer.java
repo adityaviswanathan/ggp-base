@@ -63,11 +63,6 @@ public final class AlphaBetaGamer extends SampleGamer
 
         Move selection = moves.get(0);
 
-        
-        //only do search if there is more than one move to choose from
-        if (moves.size() > 1)
-            selection = bestMove(getRole(), getCurrentState());
-
         long stop = System.currentTimeMillis();
 
         notifyObservers(new GamerSelectedMoveEvent(moves, selection, stop - start));
