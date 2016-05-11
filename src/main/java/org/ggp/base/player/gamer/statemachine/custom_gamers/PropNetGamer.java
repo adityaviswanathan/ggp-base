@@ -28,11 +28,17 @@ public final class PropNetGamer extends StateMachineGamer
 {
 
     private StateMachine sharedStateMachine = null;
+    private StateMachine verifierStateMachine = null;
 
     @Override
     public void stateMachineMetaGame(long timeout) throws TransitionDefinitionException, MoveDefinitionException, GoalDefinitionException
     {
         sharedStateMachine = getStateMachine();
+        verifierStateMachine = new CachedStateMachine(new ProverStateMachine());
+        if (sharedStateMachine.getInitialState().equals(verifierStateMachine.getInitialState())) 
+            System.out.println("Yes initial is right");
+        else 
+            System.out.println("Fuckkkk");
     }
 
     /**
@@ -58,7 +64,8 @@ public final class PropNetGamer extends StateMachineGamer
     @Override
     public String getName() { return getClass().getSimpleName(); }
     @Override
-    public StateMachine getInitialStateMachine() { return new CachedStateMachine(new SamplePropNetStateMachine()); }
+    public StateMachine getInitialStateMachine() { return new SamplePropNetStateMachine(); }
+    //public StateMachine getInitialStateMachine() { return new CachedStateMachine(new SamplePropNetStateMachine()); }
     @Override
     public DetailPanel getDetailPanel() { return new SimpleDetailPanel(); }
     @Override

@@ -15,12 +15,34 @@ import org.ggp.base.util.statemachine.exceptions.TransitionDefinitionException;
 
 import org.ggp.base.util.statemachine.Role;
 import org.ggp.base.util.statemachine.MachineState;
+import org.ggp.base.util.statemachine.StateMachine;
 
 /**
  * AlphaBetaGamer implements minimax with alpha-beta pruning
  */
 public final class AlphaBetaGamer extends SampleGamer
 {
+
+    private StateMachine sharedStateMachine = null;
+
+    private void printStateInfo(MachineState state) throws TransitionDefinitionException, MoveDefinitionException, GoalDefinitionException
+    {
+        System.out.println("-------------------------------------");
+        System.out.println("Current state: " + state);
+        List<Move> actions = sharedStateMachine.findActions(getRole());
+        System.out.println("All actions: " + actions.toString());
+        List<Move> legalMoves = sharedStateMachine.getLegalMoves(state, getRole());
+        System.out.println("Legal actions " + legalMoves.toString());  
+        System.out.println("-------------------------------------\n");
+    }
+
+    @Override
+    public void stateMachineMetaGame(long timeout) throws TransitionDefinitionException, MoveDefinitionException, GoalDefinitionException
+    {
+        sharedStateMachine = getStateMachine();
+        MachineState initialState = sharedStateMachine.findInits();
+        printStateInfo(initialState);  
+    }
 
     int upperThreshold = 100;
     int lowerThreshold = 0;
@@ -34,12 +56,13 @@ public final class AlphaBetaGamer extends SampleGamer
     public Move stateMachineSelectMove(long timeout) throws TransitionDefinitionException, MoveDefinitionException, GoalDefinitionException
     {
         long start = System.currentTimeMillis();
+        printStateInfo(getCurrentState());
 
+        List<Move> actions = sharedStateMachine.findActions(getRole());
         List<Move> moves = getStateMachine().findLegals(getRole(), getCurrentState());
 
         Move selection = moves.get(0);
 
-        System.out.println(getStateMachine().getInitialState().toString());
         
         //only do search if there is more than one move to choose from
         if (moves.size() > 1)

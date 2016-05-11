@@ -18,6 +18,10 @@ import org.ggp.base.util.statemachine.exceptions.TransitionDefinitionException;
 import org.ggp.base.util.statemachine.Role;
 import org.ggp.base.util.statemachine.MachineState;
 import org.ggp.base.util.statemachine.StateMachine;
+import org.ggp.base.util.statemachine.cache.CachedStateMachine;
+import org.ggp.base.util.statemachine.implementation.prover.ProverStateMachine;
+import org.ggp.base.util.statemachine.implementation.propnet.SamplePropNetStateMachine;
+import org.ggp.base.util.statemachine.verifier.StateMachineVerifier;
 
 /**
  * MCTSGamer
@@ -98,9 +102,25 @@ public final class MCTSGamer extends SampleGamer
     TreeNode currRootNode = null; 
     int ourTurnIndex = -1;
 
+    StateMachine solverMachine = null;
 
-    
-    
+    // compares the results of our state machines
+    private void testPropNetMachine() throws TransitionDefinitionException, MoveDefinitionException, GoalDefinitionException
+    {
+        MachineState initialState = sharedStateMachine.findInits();
+        System.out.println("Initial state: " + initialState);
+        List<Move> actions = sharedStateMachine.findActions(getRole());
+        System.out.println("All actions: " + actions.toString());
+        List<Move> legalMoves = sharedStateMachine.getLegalMoves(initialState, getRole());
+        System.out.println("Legal actions: " + legalMoves.toString());
+        System.out.println("Exiting initial test");
+        System.exit(0);  
+    }
+
+    @Override
+    public StateMachine getInitialStateMachine() { 
+        return new CachedStateMachine(new SamplePropNetStateMachine()); 
+    }
 
     @Override
     public void stateMachineMetaGame(long timeout) throws TransitionDefinitionException, MoveDefinitionException, GoalDefinitionException
@@ -114,6 +134,8 @@ public final class MCTSGamer extends SampleGamer
         roles = sharedStateMachine.getRoles();
         numRoles = roles.size();
 
+        testPropNetMachine();
+        
         for (int i = 0; i < roles.size(); i++) {
             if (roles.get(i).equals(ourRole)) {
                 ourTurnIndex = i;
@@ -126,6 +148,7 @@ public final class MCTSGamer extends SampleGamer
         currRootNode = new TreeNode(initialState, null);
 
         // set game type
+        /*
         if (numRoles == 1) {
             gameType = GameType.SINGLE_PLAYER_GAME;
             currRootNode.setOurTurn(true); // one player case, always 0
@@ -152,10 +175,13 @@ public final class MCTSGamer extends SampleGamer
         }
         
         // expand MCTS tree if we still have time
+        */
+
         int numSimulations = 0;
+        
         while (System.currentTimeMillis() < metagameStopTime) {
-            MCTS(currRootNode, metagameStopTime);
-            numSimulations++;
+            //MCTS(currRootNode, metagameStopTime);
+            //numSimulations++;
         }
         System.out.println("Metagame simulations completed: " + numSimulations);
     }
