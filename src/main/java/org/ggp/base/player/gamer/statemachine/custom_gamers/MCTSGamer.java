@@ -194,6 +194,7 @@ public final class MCTSGamer extends SampleGamer
                 break;
             }
         }
+
         System.out.println("Simulations completed: " + numDepthCharges);
         System.out.println("Expected utility: " + currRootNode.getUtility());
 
@@ -211,9 +212,7 @@ public final class MCTSGamer extends SampleGamer
     private TreeNode MCTS(TreeNode node, long timeout) throws TransitionDefinitionException, MoveDefinitionException, GoalDefinitionException
     {
         TreeNode selectedNode = selection(node);
-
         TreeNode expandedNode = expansion(selectedNode);
-
         if (expandedNode != null) {
             performSimulation(selectedNode);
             int bestUtility = -1;
@@ -226,7 +225,6 @@ public final class MCTSGamer extends SampleGamer
             }
             return bestChild;
         }
-
         System.out.println("Error completing MCTS, returning null");
         return null;
     }
@@ -236,13 +234,11 @@ public final class MCTSGamer extends SampleGamer
         if (node.getVisits() == 0 || sharedStateMachine.findTerminalp(node.getState())) {
             return node;
         }
-
         for (int i = 0; i < node.getChildren().size(); i++) {
             if (node.getChildren().get(i).getVisits() == 0) {
                 return node.getChildren().get(i);
             }
         }
-
         TreeNode selectedNode = node;
         int maxScore = Integer.MIN_VALUE;
         int minScore = Integer.MAX_VALUE;
@@ -284,14 +280,16 @@ public final class MCTSGamer extends SampleGamer
         List<MachineState> nextStates = sharedStateMachine.getNextStates(node.getState());
         for (MachineState state : nextStates) {
             TreeNode nextNode = new TreeNode(state, node);
-            List<Move> moves = sharedStateMachine.getRandomJointMove(nextNode.getState());
-            nextNode.setOurTurn(!moves.get(ourTurnIndex).toString().equals("noop"));
+            if (!sharedStateMachine.findTerminalp(nextNode.getState())) {
+                List<Move> moves = sharedStateMachine.getRandomJointMove(nextNode.getState());
+                nextNode.setOurTurn(!moves.get(ourTurnIndex).toString().equals("noop"));
+            }
             node.addChild(nextNode);
         }
         return node.getChildren().get(new Random().nextInt(node.getChildren().size()));
     }
 
-    private int performSimulation(TreeNode node) throws TransitionDefinitionException, MoveDefinitionException, GoalDefinitionException
+    private void performSimulation(TreeNode node) throws TransitionDefinitionException, MoveDefinitionException, GoalDefinitionException
     {
         TreeNode currNode = node;
         TreeNode nextNode = null;
@@ -300,17 +298,10 @@ public final class MCTSGamer extends SampleGamer
             nextNode = new TreeNode(sharedStateMachine.getNextState(currNode.getState(), randomJointMove), currNode);
             currNode = nextNode;
         }
-
         if (currNode != null && sharedStateMachine.findTerminalp(currNode.getState())) {
-            int score = sharedStateMachine.findReward(ourRole, currNode.getState());
-            if (gameType == GameType.SINGLE_PLAYER_GAME && score == 100) {
-                score = Integer.MAX_VALUE; // scale weight of winning score
-            }
+            int score = sharedStateMachine.getGoal(currNode.getState(), ourRole);
             backpropagation(currNode, score);
-            return score;
         } 
-
-        return 0;
     }
 
 

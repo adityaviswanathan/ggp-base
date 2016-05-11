@@ -45,6 +45,7 @@ public class SamplePropNetStateMachine extends StateMachine {
             propNet = OptimizingPropNetFactory.create(description);
             roles = propNet.getRoles();
             ordering = getOrdering();
+            System.out.println(ordering.toString());
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
