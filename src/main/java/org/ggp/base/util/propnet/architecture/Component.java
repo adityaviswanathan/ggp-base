@@ -61,7 +61,11 @@ public abstract class Component implements Serializable
     /**
      * Clears value of component as well as relevant component info
      */
-    public abstract void clearComponent();
+    public void clearComponent()
+    {
+        setValue(false);
+        setLastValue(false);
+    }
 
     /**
      * Recursively forward propogate the new value of the component

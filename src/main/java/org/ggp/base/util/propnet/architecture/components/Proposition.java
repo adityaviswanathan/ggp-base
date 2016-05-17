@@ -33,16 +33,6 @@ public final class Proposition extends Component
     }
 
     /**
-     * Clears value of component as well as relevant component info
-     */
-    @Override
-    public void clearComponent()
-    {
-        setValue(false);
-        setLastValue(false);
-    }
-
-    /**
      * Recursively forward propoaate the new value of the component
      */
     @Override
@@ -73,14 +63,6 @@ public final class Proposition extends Component
         for (Component comp : outputArray) {
             comp.forwardPropagate(val);
         }
-    }
-
-    public void startPropagate()
-    {
-        setLastValue(getValue());
-        for (Component c : getOutputArray()) {
-            c.forwardPropagate(getValue());
-        }    
     }
 
     /**

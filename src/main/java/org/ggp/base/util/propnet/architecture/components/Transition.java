@@ -9,29 +9,18 @@ import org.ggp.base.util.propnet.architecture.Component;
 public final class Transition extends Component
 {
     /**
-     * Clears value of component as well as relevant component info
-     */
-    @Override
-    public void clearComponent()
-    {
-        setValue(false);
-        setLastValue(false);
-    }
-
-    /**
      * Recursively forward propoaate the new value of the component
      */
     @Override
     public void forwardPropagate(boolean val)
     {
-        setValue(val);
-        if (getValue() != getLastValue()) {
-            setLastValue(value);
+        if (val != getValue()) {
+            setValue(val);
             Component[] outputArray = getOutputArray();
             for (Component comp : outputArray) {
                 comp.forwardPropagate(getValue());
             }
-        } 
+        }
     }
 
     /**

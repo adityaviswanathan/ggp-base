@@ -23,10 +23,7 @@ public final class Constant extends Component
      * Clears value of component as well as relevant component info
      */
     @Override
-    public void clearComponent()
-    {
-        // No need to change value
-    }
+    public void clearComponent() { /* No need to change value */ }
 
     /**
      * Recursively forward propogate the new value of the component

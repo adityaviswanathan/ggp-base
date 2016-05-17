@@ -9,20 +9,10 @@ import org.ggp.base.util.propnet.architecture.Component;
 public final class Not extends Component
 {
     /**
-     * Clears value of component as well as relevant component info
-     */
-    @Override
-    public void clearComponent()
-    {
-        setValue(false);
-        setLastValue(false);
-    }
-
-    /**
      * Recursively forward propogate the new value of the component
      */
     @Override
-    public void forwardPropagate(boolean val)
+    public void forwardPropagate(boolean unused)
     {
         setValue(!getSingleInput().getValue());
         if (getValue() != getLastValue()) {

@@ -8,29 +8,20 @@ import org.ggp.base.util.propnet.architecture.Component;
 @SuppressWarnings("serial")
 public final class And extends Component
 {
-
-    private int numTrue = 0;
-
-    /**
-     * Clears value of component as well as relevant component info
-     */
-    @Override
-    public void clearComponent()
-    {
-        setValue(false);
-        setLastValue(false);
-        this.numTrue = 0;
-    }
-
-    /**
-     * Recursively forward propogate the new value of the component
-     * REFACTOR
-     */
+    // current number of true input components
+    private int trueInputs = 0;
+    
     @Override
     public void forwardPropagate(boolean val)
     {
-        numTrue += (val) ? 1 : -1;
-        setValue((numTrue == getNumInputs()) ^ false);
+        if (val)
+            trueInputs++;
+        else 
+            trueInputs--;
+
+        boolean newVal = (trueInputs == getNumInputs());
+        setValue(newVal);
+
         if (getValue() != getLastValue()) {
             setLastValue(getValue());
             Component[] outputs = getOutputArray();
@@ -38,32 +29,6 @@ public final class And extends Component
                 comp.forwardPropagate(getValue());
             }
         }
-    }
-
-    /**
-     * Recursively forward propogate the new value of the component
-     */
-    public void forwardPropagate2(boolean val)
-    {
-        /*
-        if (timesPropogated < getInputArray().length) {
-            timesPropogated++;
-            if (!val) {
-                falseEncountered = true;
-                timesPropogated = getInputArray().length;
-                setValue(false);
-                if (getValue() != getLastValue()) {
-                    setLastValue(getValue());
-                    Component[] outputs = getOutputArray();
-                    for (Component comp : outputs) {
-                        comp.forwardPropagate(getValue());
-                    }
-                }
-            } 
-        } else if (timesPropogated == numInputs) {
-            // 
-        }
-        */
     }
 
     /**
