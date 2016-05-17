@@ -11,8 +11,14 @@ public final class Proposition extends Component
 {
     /** The name of the Proposition. */
     private GdlSentence name;
-    /** The value of the Proposition. */
-    private boolean value;
+
+    private boolean baseProp = false;
+    public void setIsBaseProp() { this.baseProp = true; }
+    public boolean isBaseProp() { return this.baseProp; }
+
+    public boolean inputProp = false;
+    public void setIsInputProp() { this.inputProp = true; }
+    public boolean isInputProp() { return this.inputProp; }
 
     /**
      * Creates a new Proposition with name <tt>name</tt>.
@@ -23,7 +29,58 @@ public final class Proposition extends Component
     public Proposition(GdlSentence name)
     {
         this.name = name;
-        this.value = false;
+        setValue(false);
+    }
+
+    /**
+     * Clears value of component as well as relevant component info
+     */
+    @Override
+    public void clearComponent()
+    {
+        setValue(false);
+        setLastValue(false);
+    }
+
+    /**
+     * Recursively forward propoaate the new value of the component
+     */
+    @Override
+    public void forwardPropagate(boolean val)
+    {
+        if (isInputProp() || isBaseProp()) {
+            return;
+        } else {
+            setValue(val);
+            if (getValue() != getLastValue()) {
+                setLastValue(getValue());
+                Component[] outputArray = getOutputArray();
+                for (Component comp : outputArray) {
+                    comp.forwardPropagate(val);
+                }
+            }
+        }
+    }
+
+    /**
+     * Begin forward propogation from the current Proposition
+     */
+    public void beginForwardPropagation(boolean val)
+    {
+        setValue(val);
+        setLastValue(getValue());
+        Component[] outputArray = getOutputArray();
+        for (Component comp : outputArray) {
+            comp.forwardPropagate(val);
+        }
+    }
+
+    public void startPropagate()
+    {
+        setLastValue(getValue());
+        for (Component c : getOutputArray()) {
+            c.forwardPropagate(getValue());
+        }    
     }
 
     /**
@@ -45,28 +102,6 @@ public final class Proposition extends Component
     public void setName(GdlSentence newName)
     {
         name = newName;
-    }
-
-    /**
-     * Returns the current value of the Proposition.
-     *
-     * @see org.ggp.base.util.propnet.architecture.Component#getValue()
-     */
-    @Override
-    public boolean getValue()
-    {
-        return value;
-    }
-
-    /**
-     * Setter method.
-     *
-     * @param value
-     *            The new value of the Proposition.
-     */
-    public void setValue(boolean value)
-    {
-        this.value = value;
     }
 
     /**

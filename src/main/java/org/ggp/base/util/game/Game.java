@@ -157,6 +157,26 @@ public final class Game {
         }
     }
 
+
+    public List<Gdl> getDescriptionList() {
+        try {
+            List<Gdl> descs = new ArrayList<Gdl>();
+            SymbolList list = (SymbolList) SymbolFactory.create(theDescription);
+            for (int i = 0; i < list.size(); i++)
+            {
+                descs.add(GdlFactory.create(list.get(i)));
+            }
+            return descs;
+        } catch (GdlFormatException e) {
+            e.printStackTrace();
+            return null;
+        } catch (SymbolFormatException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+
     public String serializeToJSON() {
         try {
             JSONObject theGameObject = new JSONObject();

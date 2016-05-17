@@ -9,14 +9,29 @@ import org.ggp.base.util.propnet.architecture.Component;
 public final class Not extends Component
 {
     /**
-     * Returns the inverse of the input to the not.
-     *
-     * @see org.ggp.base.util.propnet.architecture.Component#getValue()
+     * Clears value of component as well as relevant component info
      */
     @Override
-    public boolean getValue()
+    public void clearComponent()
     {
-        return !getSingleInput().getValue();
+        setValue(false);
+        setLastValue(false);
+    }
+
+    /**
+     * Recursively forward propogate the new value of the component
+     */
+    @Override
+    public void forwardPropagate(boolean val)
+    {
+        setValue(!getSingleInput().getValue());
+        if (getValue() != getLastValue()) {
+            setLastValue(getValue());
+            Component[] outputs = getOutputArray();
+            for (Component comp : outputs) {
+                comp.forwardPropagate(getValue());
+            }
+        }
     }
 
     /**

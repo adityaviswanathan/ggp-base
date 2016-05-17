@@ -11,7 +11,7 @@ import org.ggp.base.util.statemachine.exceptions.GoalDefinitionException;
 import org.ggp.base.util.statemachine.exceptions.MoveDefinitionException;
 import org.ggp.base.util.statemachine.exceptions.TransitionDefinitionException;
 import org.ggp.base.util.statemachine.implementation.prover.ProverStateMachine;
-
+import org.ggp.base.util.statemachine.implementation.propnet.*;
 /**
  * SampleGamer is a simplified version of the StateMachineGamer, dropping some
  * advanced functionality so the example gamers can be presented concisely.
@@ -44,7 +44,7 @@ public abstract class SampleGamer extends StateMachineGamer
     // This is the default State Machine
     @Override
     public StateMachine getInitialStateMachine() {
-        return new CachedStateMachine(new ProverStateMachine());
+        return new CachedStateMachine(new SamplePropNetStateMachine());
     }
 
     // This is the default Sample Panel

@@ -8,9 +8,6 @@ import org.ggp.base.util.propnet.architecture.Component;
 @SuppressWarnings("serial")
 public final class Constant extends Component
 {
-    /** The value of the constant. */
-    private final boolean value;
-
     /**
      * Creates a new Constant with value <tt>value</tt>.
      *
@@ -19,18 +16,28 @@ public final class Constant extends Component
      */
     public Constant(boolean value)
     {
-        this.value = value;
+        setValue(value);
     }
 
     /**
-     * Returns the value that the constant was initialized to.
-     *
-     * @see org.ggp.base.util.propnet.architecture.Component#getValue()
+     * Clears value of component as well as relevant component info
      */
     @Override
-    public boolean getValue()
+    public void clearComponent()
     {
-        return value;
+        // No need to change value
+    }
+
+    /**
+     * Recursively forward propogate the new value of the component
+     */
+    @Override
+    public void forwardPropagate(boolean val)
+    {
+        Component[] outputs = getOutputArray();
+        for (Component comp : outputs) {
+            forwardPropagate(getValue());
+        }
     }
 
     /**

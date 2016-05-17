@@ -12,12 +12,31 @@ import java.util.Set;
 
 public abstract class Component implements Serializable
 {
-
     private static final long serialVersionUID = 352524175700224447L;
-    /** The inputs to the component. */
+    
     private final Set<Component> inputs;
-    /** The outputs of the component. */
+    private Component[] inputArray;
+    protected Component[] getInputArray() { return this.inputArray; }
+    private int numInputs;
+    public int getNumInputs() { return this.numInputs; }
+
     private final Set<Component> outputs;
+    private Component[] outputArray;
+    protected Component[] getOutputArray() { return this.outputArray; }
+    private int numOutputs;
+    public int getNumOutputs() { return this.numOutputs; }
+
+    protected boolean value = false;
+
+    // set and get value of current component
+    public void setValue(boolean val) { this.value = val; }
+    public boolean getValue() { return this.value; }
+
+    protected boolean lastValue = false; // cache last value to stop forward propogation
+
+    // set and get last value of current component
+    public void setLastValue(boolean val) { this.lastValue = val; }
+    public boolean getLastValue() { return this.lastValue; }
 
     /**
      * Creates a new Component with no inputs or outputs.
@@ -28,12 +47,28 @@ public abstract class Component implements Serializable
         this.outputs = new HashSet<Component>();
     }
 
+    public void initComponent()
+    {
+        this.numInputs = inputs.size();
+        this.inputArray = new Component[this.numInputs];
+        inputs.toArray(this.inputArray);
+
+        this.numOutputs = outputs.size();
+        this.outputArray = new Component[this.numOutputs];
+        outputs.toArray(this.outputArray);
+    }
+
     /**
-     * Adds a new input.
-     *
-     * @param input
-     *            A new input.
+     * Clears value of component as well as relevant component info
      */
+    public abstract void clearComponent();
+
+    /**
+     * Recursively forward propogate the new value of the component
+     */
+    public abstract void forwardPropagate(boolean val);
+
+
     public void addInput(Component input)
     {
         inputs.add(input);
@@ -59,67 +94,31 @@ public abstract class Component implements Serializable
         outputs.clear();
     }
 
-    /**
-     * Adds a new output.
-     *
-     * @param output
-     *            A new output.
-     */
     public void addOutput(Component output)
     {
         outputs.add(output);
     }
 
-    /**
-     * Getter method.
-     *
-     * @return The inputs to the component.
-     */
     public Set<Component> getInputs()
     {
         return inputs;
     }
 
-    /**
-     * A convenience method, to get a single input.
-     * To be used only when the component is known to have
-     * exactly one input.
-     *
-     * @return The single input to the component.
-     */
     public Component getSingleInput() {
         assert inputs.size() == 1;
         return inputs.iterator().next();
     }
 
-    /**
-     * Getter method.
-     *
-     * @return The outputs of the component.
-     */
     public Set<Component> getOutputs()
     {
         return outputs;
     }
 
-    /**
-     * A convenience method, to get a single output.
-     * To be used only when the component is known to have
-     * exactly one output.
-     *
-     * @return The single output to the component.
-     */
-    public Component getSingleOutput() {
+    public Component getSingleOutput() 
+    {
         assert outputs.size() == 1;
         return outputs.iterator().next();
     }
-
-    /**
-     * Returns the value of the Component.
-     *
-     * @return The value of the Component.
-     */
-    public abstract boolean getValue();
 
     /**
      * Returns a representation of the Component in .dot format.
