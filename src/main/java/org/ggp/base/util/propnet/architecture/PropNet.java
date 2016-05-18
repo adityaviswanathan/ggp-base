@@ -8,6 +8,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Queue;
+import java.util.LinkedList;
 
 import org.ggp.base.util.gdl.grammar.GdlConstant;
 import org.ggp.base.util.gdl.grammar.GdlPool;
@@ -19,6 +21,7 @@ import org.ggp.base.util.logging.GamerLogger;
 import org.ggp.base.util.propnet.architecture.components.And;
 import org.ggp.base.util.propnet.architecture.components.Not;
 import org.ggp.base.util.propnet.architecture.components.Or;
+import org.ggp.base.util.propnet.architecture.components.Constant;
 import org.ggp.base.util.propnet.architecture.components.Proposition;
 import org.ggp.base.util.propnet.architecture.components.Transition;
 import org.ggp.base.util.statemachine.Role;
@@ -98,6 +101,10 @@ public final class PropNet
     /** A helper list of all of the roles. */
     private final List<Role> roles;
 
+    /** Reference to each proposition's output, indexed by Proposition */
+    private Map<Proposition, Set<Component>> propsInputOutputMap;
+
+
     public void addComponent(Component c)
     {
         components.add(c);
@@ -113,7 +120,6 @@ public final class PropNet
      */
     public PropNet(List<Role> roles, Set<Component> components)
     {
-
         this.roles = roles;
         this.components = components;
         this.propositions = recordPropositions();
@@ -123,7 +129,93 @@ public final class PropNet
         this.goalPropositions = recordGoalPropositions();
         this.initProposition = recordInitProposition();
         this.terminalProposition = recordTerminalProposition();
-        this.legalInputMap = makeLegalInputMap();
+        this.legalInputMap = makeLegalInputMap(); 
+        this.propsInputOutputMap = makePropInputOutputMap();
+        setTypes();
+    }
+
+    /**
+     * Sets ANDS, ORS, NOTS, CONSTANTS, TRANSITIONS, and VIEW_PROPS types for components
+     * Currently does not set any of the props directly descending from initProposition
+     * Also does not set 
+     **/
+    private void setTypes()
+    {
+        for (Component comp : components) {
+            if (comp instanceof Constant) comp.setType(Component.Type.CONSTANT);
+            else if (comp instanceof Not) comp.setType(Component.Type.NOT);
+            else if (comp instanceof Or)  comp.setType(Component.Type.OR);
+            else if (comp instanceof And) comp.setType(Component.Type.AND);
+            else if (comp instanceof Transition) comp.setType(Component.Type.TRANSITION);
+        }
+        for (Proposition prop : propositions) {
+            if (!prop.isTypeSet()) {
+                Set<Component> inputs = prop.getInputs();
+                for (Component comp : inputs) {
+                    if (comp.isTypeSet() && comp.isGateComponent()) {
+                        prop.setType(Component.Type.VIEW_PROP);
+                    }
+                }
+            }
+        }
+    }
+
+    private Map<Proposition, Set<Component>> makePropInputOutputMap()
+    {
+        Map<Proposition, Set<Component>> result = new HashMap<Proposition, Set<Component>>();
+        
+        Set<Proposition> noOutputProps = new HashSet<Proposition>();
+        noOutputProps.add(terminalProposition);
+        for (Set<Proposition> legals : legalPropositions.values()) 
+            noOutputProps.addAll(legals);
+        for (Set<Proposition> goals : goalPropositions.values()) 
+            noOutputProps.addAll(goals);
+        for (Proposition prop : noOutputProps) {
+            Set<Component> propInputs = new HashSet<Component>(); // all reachable inputs
+            Set<Component> visitedInputComps = new HashSet<Component>();
+            Queue<Component> toVisitQueue = new LinkedList<Component>();
+            toVisitQueue.add(prop);
+            while (!toVisitQueue.isEmpty()) {
+                Component currComp = toVisitQueue.remove();
+                propInputs.add(currComp);
+                Set<Component> outputs = currComp.getOutputs();
+                for (Component output : outputs) {
+                    if (!visitedInputComps.contains(output)) {
+                        toVisitQueue.add(output);
+                        visitedInputComps.add(output);
+                    }
+                }
+            }
+            result.put(prop, propInputs); 
+        }
+
+        Set<Proposition> noInputProps = new HashSet<Proposition>();
+        noInputProps.addAll(inputPropositions.values());
+        noInputProps.addAll(basePropositions.values());
+        for (Proposition prop : noInputProps) {
+            Set<Component> propOutputs = new HashSet<Component>(); // all reachable inputs
+            Set<Component> visitedOutputComps = new HashSet<Component>();
+            Queue<Component> toVisitQueue = new LinkedList<Component>();
+            toVisitQueue.add(prop);
+            while (!toVisitQueue.isEmpty()) {
+                Component currComp = toVisitQueue.remove();
+                propOutputs.add(currComp);
+                Set<Component> inputs = currComp.getInputs();
+                for (Component input : inputs) {
+                    if (!visitedOutputComps.contains(input)) {
+                        toVisitQueue.add(input);
+                        visitedOutputComps.add(input);
+                    }
+                }
+            }
+            result.put(prop, propOutputs);
+        }   
+        return result;
+    }
+
+    public Set<Component> getDependents(Proposition prop)
+    {
+        return propsInputOutputMap.get(prop);
     }
 
     public List<Role> getRoles()
@@ -290,6 +382,7 @@ public final class PropNet
      * by definition the proposition is a base proposition.
      *
      * @return An index over the BasePropositions in the PropNet.
+     * MODIFIED to add component type
      */
     private Map<GdlSentence, Proposition> recordBasePropositions()
     {
@@ -301,6 +394,10 @@ public final class PropNet
 
             Component component = proposition.getSingleInput();
             if (component instanceof Transition) {
+
+                // set prop type to BASE_PROP
+                proposition.setType(Component.Type.BASE_PROP);
+                
                 basePropositions.put(proposition.getName(), proposition);
             }
         }
@@ -317,6 +414,7 @@ public final class PropNet
      * names as keys that map to the goal propositions in the index.
      *
      * @return An index over the GoalPropositions in the PropNet.
+     * MODIFIED to add component type
      */
     private Map<Role, Set<Proposition>> recordGoalPropositions()
     {
@@ -335,6 +433,10 @@ public final class PropNet
             if (!goalPropositions.containsKey(theRole)) {
                 goalPropositions.put(theRole, new HashSet<Proposition>());
             }
+
+            // set prop type to GOAL_PROP
+            proposition.setType(Component.Type.GOAL_PROP);
+
             goalPropositions.get(theRole).add(proposition);
         }
 
@@ -345,6 +447,7 @@ public final class PropNet
      * Returns a reference to the single, unique, InitProposition.
      *
      * @return A reference to the single, unique, InitProposition.
+     * MODIFIED to add component type
      */
     private Proposition recordInitProposition()
     {
@@ -356,6 +459,10 @@ public final class PropNet
 
             GdlConstant constant = ((GdlProposition) proposition.getName()).getName();
             if (constant.getValue().toUpperCase().equals("INIT")) {
+
+                // set prop type to INIT_PROP
+                proposition.setType(Component.Type.INIT_PROP);
+
                 return proposition;
             }
         }
@@ -366,6 +473,7 @@ public final class PropNet
      * Builds an index over the InputPropositions in the PropNet.
      *
      * @return An index over the InputPropositions in the PropNet.
+     * MODIFIED to add component type
      */
     private Map<GdlSentence, Proposition> recordInputPropositions()
     {
@@ -378,6 +486,10 @@ public final class PropNet
 
             GdlRelation relation = (GdlRelation) proposition.getName();
             if (relation.getName().getValue().equals("does")) {
+
+                // set prop type to INPUT_PROP
+                proposition.setType(Component.Type.INPUT_PROP);
+
                 inputPropositions.put(proposition.getName(), proposition);
             }
         }
@@ -401,6 +513,10 @@ public final class PropNet
 
             GdlRelation relation = (GdlRelation) proposition.getName();
             if (relation.getName().getValue().equals("legal")) {
+
+                // set prop type to LEGAL_PROP
+                proposition.setType(Component.Type.LEGAL_PROP);
+
                 GdlConstant name = (GdlConstant) relation.get(0);
                 Role r = new Role(name);
                 if (!legalPropositions.containsKey(r)) {
@@ -444,6 +560,9 @@ public final class PropNet
                 GdlConstant constant = ((GdlProposition) proposition.getName()).getName();
                 if ( constant.getValue().equals("terminal") )
                 {
+                    // set prop type to TERMINAL_PROP
+                    proposition.setType(Component.Type.TERMINAL_PROP);
+
                     return proposition;
                 }
             }
@@ -459,8 +578,10 @@ public final class PropNet
     public int getNumAnds() {
         int andCount = 0;
         for(Component c : components) {
-            if(c instanceof And)
+            if(c instanceof And) {
+
                 andCount++;
+            }
         }
         return andCount;
     }
@@ -469,6 +590,7 @@ public final class PropNet
         int orCount = 0;
         for(Component c : components) {
             if(c instanceof Or)
+
                 orCount++;
         }
         return orCount;

@@ -110,7 +110,7 @@ public class OptimizingPropNetFactory {
      * PropNet creation.
      */
     public static PropNet create(List<Gdl> description) throws InterruptedException {
-        return create(description, false);
+        return create(description, true);
     }
 
     public static PropNet create(List<Gdl> description, boolean verbose) throws InterruptedException {
