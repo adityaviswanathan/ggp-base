@@ -15,15 +15,15 @@ import java.util.Set;
 public abstract class Component implements Serializable
 {
     // helps to determine component type without using instance of
-    public enum Type {
-        UNSET,              // UNSET
+    public enum CmpType {
+        UNSET,              // Default 
         TRANSITION,         // set in propNet.setComponentTypes()
         NOT,                // set in propNet.setComponentTypes()
         AND,                // set in propNet.setComponentTypes()
         OR,                 // set in propNet.setComponentTypes()
         CONSTANT,           // set in propNet.setComponentTypes()
-        INIT_PROP,          // set in PropNet.recordInitProposition()
-        TERMINAL_PROP,      // set in PropNet.recordTerminalProposition()
+        INIT_PROP,          // set in propNet.recordInitProposition()
+        TERMINAL_PROP,      // set in propNet.recordTerminalProposition()
         LEGAL_PROP,         // set in PropNet.recordLegalPropositions()
         GOAL_PROP,          // set in PropNet.recordGoalPropositions()
         BASE_PROP,          // set in PropNet.recordBasePropositions()
@@ -32,24 +32,16 @@ public abstract class Component implements Serializable
     }
 
     // base identifier for components    
-    private Type identifier = Type.UNSET;
-    public void setType(Type type) { this.identifier = type; }
-    public Type getType() { return this.identifier; }
-    public boolean isTypeSet() { return this.identifier != Type.UNSET; }
+    private CmpType identifier = CmpType.UNSET;
+    public void setType(CmpType type) { this.identifier = type; }
+    public CmpType getType() { return this.identifier; }
+    public boolean isTypeSet() { return this.identifier != CmpType.UNSET; }
     public String getTypeString() { return this.identifier.name(); } // returns UNSET, NOT.... depending on value
-    public boolean isGateComponent() { 
-        return (this.identifier == Type.NOT || this.identifier == Type.AND || this.identifier == Type.OR);
-    }
 
-    // the current marking of a component
-    private boolean currMarking = false;
-    public void setMarking(boolean mark) { this.currMarking = mark; }
-    public boolean getMarking() { return this.currMarking; }
-
-    // check whether the component's current marking is correct
-    private boolean correctlyMarked = false;
-    public void setCorrectlyMarked(boolean correct) { this.correctlyMarked = correct; }
-    public boolean isCorrectlyMarked() { return this.correctlyMarked; }
+    // whether the last component marking is consistent after reset
+    private boolean consistent = false;
+    public void setConsistent(boolean val) { this.consistent = val; }
+    public boolean isConsistent() { return this.consistent; }
 
     // original private variables
     private static final long serialVersionUID = 352524175700224447L;
@@ -63,9 +55,6 @@ public abstract class Component implements Serializable
     {
         this.inputs = new HashSet<Component>();
         this.outputs = new HashSet<Component>();
-        this.identifier = Type.UNSET;
-        this.currMarking = false;
-        this.correctlyMarked = false;
     }
 
     /**

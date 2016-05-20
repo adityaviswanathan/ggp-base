@@ -39,7 +39,7 @@ public final class TestPropNetGamer extends SampleGamer
     {
         sharedStateMachine = getStateMachine();
 
-        /*
+        
         Match currMatch = getMatch();
         if (currMatch != null) {
             Game currGame = currMatch.getGame();
@@ -50,7 +50,7 @@ public final class TestPropNetGamer extends SampleGamer
                 StateMachineVerifier.checkMachineConsistency(m, sharedStateMachine, 10000);
             }
         }
-        */
+        
 
         //List<Gdl> description = 
         //ProverStateMachine m = new ProverStateMachine();
