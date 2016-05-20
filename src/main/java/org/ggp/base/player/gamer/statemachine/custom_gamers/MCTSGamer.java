@@ -146,7 +146,6 @@ public final class MCTSGamer extends SampleGamer
             List<Move> randomJointMove = sharedStateMachine.getRandomJointMove(initialState);
             currRootNode.setOurTurn(!randomJointMove.get(ourTurnIndex).toString().equals("noop"));
         }
-        
         // expand MCTS tree if we still have time
         int numSimulations = 0;
         while (System.currentTimeMillis() < metagameStopTime) {
@@ -161,6 +160,7 @@ public final class MCTSGamer extends SampleGamer
     {
         long start = System.currentTimeMillis();
         long stopTime = timeout - minPlayTimeLeft;
+        sharedStateMachine = getStateMachine();
         MachineState currState = getCurrentState();
         List<Move> moves = sharedStateMachine.findLegals(getRole(), currState);
         Move selection = moves.get(0);
@@ -284,8 +284,10 @@ public final class MCTSGamer extends SampleGamer
         List<MachineState> nextStates = sharedStateMachine.getNextStates(node.getState());
         for (MachineState state : nextStates) {
             TreeNode nextNode = new TreeNode(state, node);
-            List<Move> moves = sharedStateMachine.getRandomJointMove(nextNode.getState());
-            nextNode.setOurTurn(!moves.get(ourTurnIndex).toString().equals("noop"));
+            if (!sharedStateMachine.findTerminalp(nextNode.getState())) {
+                List<Move> moves = sharedStateMachine.getRandomJointMove(nextNode.getState());
+                nextNode.setOurTurn(!moves.get(ourTurnIndex).toString().equals("noop"));
+            }
             node.addChild(nextNode);
         }
         return node.getChildren().get(new Random().nextInt(node.getChildren().size()));

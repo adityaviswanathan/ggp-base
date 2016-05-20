@@ -41,7 +41,6 @@ public class SamplePropNetStateMachine extends StateMachine {
     private Proposition[] bases; // all base props
     private Proposition[] inputs; // all input props
 
-
     /**
      * Initializes the PropNetStateMachine. You should compute the topological
      * ordering here. Additionally you may compute the initial state here, at
@@ -70,7 +69,7 @@ public class SamplePropNetStateMachine extends StateMachine {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
-    }
+    }	
 
 /* ----------------------| Public Functions | --------------------- */
 
@@ -109,8 +108,10 @@ public class SamplePropNetStateMachine extends StateMachine {
     @Override
     public MachineState getInitialState() 
     {
-        propNet.getInitProposition().setValue(true);
-        return getStateFromBase();
+    	propNet.getInitProposition().setValue(true);
+    	MachineState initialState = getStateFromBase();
+    	propNet.getInitProposition().setValue(false);
+        return initialState;
     }
 
     /**
@@ -153,6 +154,8 @@ public class SamplePropNetStateMachine extends StateMachine {
         return roles;
     }
 
+/* ----------------------| Factoring Functions | --------------------- */
+
 
 /* ----------------------| Functions from Ch 10 | --------------------------  */
 
@@ -171,18 +174,14 @@ public class SamplePropNetStateMachine extends StateMachine {
     {
         Set<Proposition> inputProps = getInputsForMoves(moves);
         for (Proposition prop : inputs) {
-        	if (inputProps.contains(prop)) {
-        		prop.setValue(true);
-        	} else {
-        		prop.setValue(false);
-        	}
+        	if (inputProps.contains(prop)) prop.setValue(true);
+        	else prop.setValue(false);
         }
     }
 
     /* clearpropnet() */
     private void clearpropnet()
     {
-    	propNet.getInitProposition().setValue(false);
         for (Proposition prop : bases) {
             prop.setValue(false);
         }
@@ -381,11 +380,6 @@ public class SamplePropNetStateMachine extends StateMachine {
         return Integer.parseInt(constant.toString());
     }
 
-    public void getStateFromBase2()
-    {
-    	Set<GdlSentence> contents = new HashSet<GdlSentence>();
-    }
-
     /**
      * A Naive implementation that computes a PropNetMachineState
      * from the true BasePropositions.  This is correct but slower than more advanced implementations
@@ -395,7 +389,7 @@ public class SamplePropNetStateMachine extends StateMachine {
     public MachineState getStateFromBase()
     {
         Set<GdlSentence> contents = new HashSet<GdlSentence>();
-        for (Proposition p : propNet.getBasePropositions().values())
+        for (Proposition p : bases)
         {
             p.setValue(p.getSingleInput().getValue());
             if (p.getValue())
