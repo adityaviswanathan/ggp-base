@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 import java.util.BitSet;
+import java.util.Arrays;
 
 import org.ggp.base.util.gdl.grammar.Gdl;
 import org.ggp.base.util.gdl.grammar.GdlConstant;
@@ -179,22 +180,15 @@ public class SamplePropNetStateMachine extends StateMachine {
             Component currComp = (Component)(toExplore.pop());
             if (!seenProps.contains(currComp)) {
                 seenProps.add(currComp);
-                if (currComp.getType() == Component.CmpType.BASE_PROP || currComp.getType() == Component.CmpType.INPUT_PROP) {
+                if (currComp.getType() == Component.CmpType.BASE_PROP) {
                     upstreamProps.add(currComp);
                 } else {
                     for (Component input : currComp.getInputArr()) {
-                        if (input.getUpstreamProps() != null) {
-                            for (Component c : input.getUpstreamProps()) {
-                                upstreamProps.add(c);
-                            }
-                        } else {
-                            toExplore.push(input);
-                        }
+                        toExplore.push(input);
                     }
                 }
             }
         }
-        LOG("We found " + upstreamProps.size() + " upstream base and input props");
         List<Component> result = new ArrayList<Component>(upstreamProps);
         comp.setUpstreamProps(result);
         return result;
@@ -206,7 +200,6 @@ public class SamplePropNetStateMachine extends StateMachine {
     private List<boolean[]> getPossibleEnumerations(int size)
     {
         if (possibleEnumCache.containsKey(size)) {
-            LOG("Cached value found for: " + size);
             return possibleEnumCache.get(size);
         }
         List<boolean[]> possibleEnums = new ArrayList<boolean[]>();
@@ -223,23 +216,27 @@ public class SamplePropNetStateMachine extends StateMachine {
                 possibleEnums.add(boolArray);
             }
         }
-        LOG("Found " + possibleEnums.size() + " possible enums for size of " + size);
         possibleEnumCache.put(size, possibleEnums);
         return possibleEnums;
     }
 
 
-    private boolean isTrueLatch(Component comp, List<Component> upstreamProps, List<boolean[]> upstreamEnums) 
+    private boolean isFalseLatch(Component comp, List<Component> upstreamProps, List<boolean[]> upstreamEnums) 
     {
+        boolean allFalse = true;
         for (int i = 0; i < upstreamEnums.size(); i++) {
+            clearpropnet();
             boolean[] currEnum = upstreamEnums.get(i);
             for (int j = 0; j < currEnum.length; j++) {
                 ((Proposition) upstreamProps.get(j)).setValue(currEnum[j]);
             }
             boolean result = propmarkp(comp.getSingleInput());
-            if (!result) return false;
+            if (result) allFalse = false;
         }
-        return true;
+        if (allFalse) {
+            LOG(((Proposition)comp).getName().toString() + " is a false latch");
+        }
+        return allFalse;
     } 
 
     /** 
@@ -256,8 +253,8 @@ public class SamplePropNetStateMachine extends StateMachine {
         // get all possible upstream enumerations
         List<boolean[]> upstreamEnums = getPossibleEnumerations(upstreamProps.size());
         // now enumerate over all upstream prop possible values and check if comp is true        
-        boolean trueLatch = isTrueLatch(comp, upstreamProps, upstreamEnums);
-        LOG(comp + " is a true latch: " + trueLatch);
+        boolean falseLatch = isFalseLatch(comp, upstreamProps, upstreamEnums);
+        if (falseLatch) comp.setIsFalseLatch();
     }
 
 /* ----------------------| Functions from Ch 10 | --------------------------  */
@@ -285,8 +282,8 @@ public class SamplePropNetStateMachine extends StateMachine {
     /* clearpropnet() */
     private void clearpropnet()
     {
-        for (Component comp : comps) {
-            comp.reset();
+        for (Proposition prop : props) {
+            prop.setValue(false);
         }   
     }
 
@@ -306,10 +303,9 @@ public class SamplePropNetStateMachine extends StateMachine {
         else if (type == Component.CmpType.LEGAL_PROP)      marking = propmarkp(comp.getSingleInput());
         else if (type == Component.CmpType.GOAL_PROP)       marking = propmarkp(comp.getSingleInput());
         else if (type == Component.CmpType.TERMINAL_PROP)   marking = propmarkp(comp.getSingleInput());
-        else if (type == Component.CmpType.TRANSITION) {
-            //LOG("Found transition");
-            marking = propmarkp(comp.getSingleInput());
-        }    
+        else if (type == Component.CmpType.TRANSITION) {     marking = propmarkp(comp.getSingleInput());
+            //LOG("Next input is of type: " + comp.getSingleInput().getTypeString());
+        }
         else if (type == Component.CmpType.UNSET)           LOG("Found unset!");
         return marking;
     }

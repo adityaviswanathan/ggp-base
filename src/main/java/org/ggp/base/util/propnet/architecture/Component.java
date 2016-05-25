@@ -58,6 +58,10 @@ public abstract class Component implements Serializable
     private boolean latch = false; // whether component is a latch
     private boolean latchValue = false; // if component is a false latch or true latch
     private boolean isLatch() { return this.latch; }
+    private boolean falseLatch = false;
+    public boolean isFalseLatch() { return this.falseLatch; }
+    public void setIsFalseLatch() { this.falseLatch = true; }
+
     private void setIsLatch(boolean latchVal) { 
         this.latch = true;
         this.latchValue = latchVal;
