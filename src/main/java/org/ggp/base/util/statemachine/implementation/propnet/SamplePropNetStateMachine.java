@@ -41,6 +41,8 @@ public class SamplePropNetStateMachine extends StateMachine {
     private Proposition[] bases; // all base props
     private Proposition[] inputs; // all input props
 
+    private List<boolean> probeBools; // latch currently being investigated
+
     /**
      * Initializes the PropNetStateMachine. You should compute the topological
      * ordering here. Additionally you may compute the initial state here, at
@@ -66,10 +68,72 @@ public class SamplePropNetStateMachine extends StateMachine {
             inputs = new Proposition[propNet.getInputPropositions().values().size()];
             propNet.getInputPropositions().values().toArray(inputs);
 
+            probeBools = new ArrayList<boolean>();
+            findLatches(bases);
+
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
     }	
+
+    public void findLatches(Proposition[] props)
+    {
+        for(Proposition base : bases) {
+            bool isLatch = detectLatch(base);
+            if(isLatch) System.out.println("FOUND LATCH FOR BASE PROP: " + base.toString());
+        }
+    }
+
+    public bool detectLatch(Proposition prop)
+    {   
+
+        /*
+         * 1. start at base proposition
+         * 2. traverse propnet and set child proposition values 
+         * 3. stop at transition (or second transition?)
+         * 4. check if argprop value has changed 
+         * 5. clear propnet and repeat with every combination of child proposition values
+         */
+
+        Proposition curr = prop;
+        Move m = getMoveFromProposition(curr);
+        List<Move> moves = new ArrayList<Move>();
+        moves.add(m);
+
+        setNextLevelProps(prop, curr, moves, true);
+        setNextLevelProps(prop, curr, moves, false);
+
+        // ugly, think of better way to scan list for occurrence of distinct value
+        if(probeBools.size() > 0) {
+            boolean first = probeBools.get(0);
+            for(boolean bool : probeBools) {
+                if(bool != first) return false;
+            }
+        }
+        return true; 
+    }
+
+    // TODO: infinite recursion, need to fix by checking for transition to break on
+    public void setNextLevelProps(Proposition probeLatch, Proposition curr, List<Move> moves, boolean val)
+    {
+        if(curr.transition) {
+            probeBools.add(probeLatch.getSingleInput().getValue());
+            return;
+        }
+
+        Set<Proposition> props = getInputsForMoves(moves);
+        for(Proposition childProp : props) {
+            childProp.setValue(val);
+            curr = childProp;
+
+            Move m = getMoveFromProposition(curr);
+            List<Move> childMoves = new ArrayList<Move>();
+            childMoves.add(m);
+
+            setNextLevelProps(curr, childMoves, true);
+            setNextLevelProps(curr, childMoves, false);
+        }
+    }
 
 /* ----------------------| Public Functions | --------------------- */
 
