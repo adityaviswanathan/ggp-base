@@ -103,7 +103,7 @@ public class SamplePropNetStateMachine extends StateMachine {
     /**
      * Returns initial state using default state from base function
 	 * 	
-     * TODO: Test if we need to clear propnet
+     * TODO: Test if this works with caching
      */
     @Override
     public MachineState getInitialState() 
@@ -139,7 +139,7 @@ public class SamplePropNetStateMachine extends StateMachine {
     /**
      * Computes the next state given state and the list of moves.
      *
-     * Wrapper function propnext(state, moves)
+     * propnext(state, moves)
      */
     @Override
     public MachineState getNextState(MachineState state, List<Move> moves) throws TransitionDefinitionException 
@@ -154,18 +154,30 @@ public class SamplePropNetStateMachine extends StateMachine {
         return roles;
     }
 
-/* ----------------------| Factoring Functions | --------------------- */
 
+/* ----------------------| Latch / Dead State Functions | --------------------- */
+
+    /** 
+     * Determines if a component is a latch by looping back through a component's 
+     * inputs until it reaches all possible base propositions upstream. 
+     * 
+     * From Piazza: During this backtrack, we pass through transitions exactly once in order 
+     *              to get propositions that influence the base propositions that p depends on.
+     */
+    private void checkLatch(Component comp)
+    {
+        
+    }
 
 /* ----------------------| Functions from Ch 10 | --------------------------  */
 
     /* markbases(state) */
     private void markbases(MachineState state)
     {
-    	clearpropnet();
         Set<Proposition> stateProps = getStateBaseProps(state);
-        for (Proposition prop : stateProps) {
-        	prop.setValue(true);
+        for (Proposition base : bases) {
+            if (stateProps.contains(base)) base.setValue(true);
+            else base.setValue(false);
         }
     }
 
@@ -182,33 +194,30 @@ public class SamplePropNetStateMachine extends StateMachine {
     /* clearpropnet() */
     private void clearpropnet()
     {
-        for (Proposition prop : bases) {
-            prop.setValue(false);
-        }
+    	for (Component comp : comps) {
+            comp.reset();
+    	}	
     }
 
     /* propmarkp(comp) */
     private boolean propmarkp(Component comp)
     {   
+        boolean marking = false;
         Component.CmpType type = comp.getType();
-        // handle components
-        if (type == Component.CmpType.NOT)             		return propmarknegation(comp);
-        else if (type == Component.CmpType.AND)             return propmarkconjunction(comp);
-        else if (type == Component.CmpType.OR)              return propmarkdisjunction(comp);
-        // immediately return the value of base, input, and constants
-        else if (type == Component.CmpType.BASE_PROP)       return comp.getValue();
-        else if (type == Component.CmpType.INPUT_PROP)      return comp.getValue();
-        else if (type == Component.CmpType.CONSTANT)        return comp.getValue();
-        else if (type == Component.CmpType.INIT_PROP)       return comp.getValue();
-        // return propmark() for the view, legal, and goal props' single inputs
-        else if (type == Component.CmpType.VIEW_PROP)       return propmarkp(comp.getSingleInput());
-        else if (type == Component.CmpType.LEGAL_PROP)      return propmarkp(comp.getSingleInput());
-        else if (type == Component.CmpType.GOAL_PROP)       return propmarkp(comp.getSingleInput());
-        else if (type == Component.CmpType.TERMINAL_PROP)   return propmarkp(comp.getSingleInput());
-        // technically we should never get to a transition within propmarkp
-        else if (type == Component.CmpType.TRANSITION) 		LOG("Fuck what to do with transitions?");
-    	// default value
-        return false;
+        if (type == Component.CmpType.NOT)                  marking = propmarknegation(comp);
+        else if (type == Component.CmpType.AND)             marking = propmarkconjunction(comp);
+        else if (type == Component.CmpType.OR)              marking = propmarkdisjunction(comp);
+        else if (type == Component.CmpType.BASE_PROP)       marking = comp.getValue();
+        else if (type == Component.CmpType.INPUT_PROP)      marking = comp.getValue();
+        else if (type == Component.CmpType.CONSTANT)        marking = comp.getValue();
+        else if (type == Component.CmpType.INIT_PROP)       marking = comp.getValue();
+        else if (type == Component.CmpType.VIEW_PROP)       marking = propmarkp(comp.getSingleInput());
+        else if (type == Component.CmpType.LEGAL_PROP)      marking = propmarkp(comp.getSingleInput());
+        else if (type == Component.CmpType.GOAL_PROP)       marking = propmarkp(comp.getSingleInput());
+        else if (type == Component.CmpType.TERMINAL_PROP)   marking = propmarkp(comp.getSingleInput());
+        else if (type == Component.CmpType.TRANSITION)      LOG("Found transition!");
+        else if (type == Component.CmpType.UNSET)           LOG("Found unset!");
+        return marking;
     }
     
     /* propmarknegation(comp) */

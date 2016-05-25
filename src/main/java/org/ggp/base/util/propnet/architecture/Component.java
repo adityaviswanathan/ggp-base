@@ -36,12 +36,30 @@ public abstract class Component implements Serializable
     public void setType(CmpType type) { this.identifier = type; }
     public CmpType getType() { return this.identifier; }
     public boolean isTypeSet() { return this.identifier != CmpType.UNSET; }
-    public String getTypeString() { return this.identifier.name(); } // returns UNSET, NOT.... depending on value
+    public String getTypeString() { return this.identifier.name(); }
 
-    // whether the last component marking is consistent after reset
-    private boolean consistent = false;
-    public void setConsistent(boolean val) { this.consistent = val; }
-    public boolean isConsistent() { return this.consistent; }
+    // speed improvements
+    private boolean marked = false;
+    private boolean mark = false;
+    public boolean isMarked() { return this.marked; }
+    public boolean getMarking() { return this.mark; }
+    public void setMarking(boolean val) { 
+        this.marked = true;
+        this.mark = val; 
+    }
+    public void reset() {
+        this.marked = false;
+        this.mark = false;
+    }
+
+    // latch variables / methods
+    private boolean latch = false; // whether component is a latch
+    private boolean latchValue = false; // if component is a false latch or true latch
+    private boolean isLatch() { return this.latch; }
+    private void setIsLatch(boolean latchVal) { 
+        this.latch = true;
+        this.latchValue = latchVal;
+    } 
 
     // original private variables
     private static final long serialVersionUID = 352524175700224447L;

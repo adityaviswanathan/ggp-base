@@ -86,8 +86,6 @@ public final class MCTSGamer extends SampleGamer
         MULTI_PLAYER_GAME
     }
 
-    // TODO check for zero sum game
-
     // General Game Info Objects - set in metagame
     StateMachine sharedStateMachine = null;
     Role ourRole = null;
@@ -194,12 +192,21 @@ public final class MCTSGamer extends SampleGamer
                 break;
             }
         }
+
         System.out.println("Simulations completed: " + numDepthCharges);
         System.out.println("Expected utility: " + currRootNode.getUtility());
 
         if (bestChild != null) {
-            List<MachineState> nextStates = sharedStateMachine.getNextStates(currRootNode.getState());
-            selection = jointMoveMap.get(bestChild.getState());
+            if (bestChild.getUtility() <= 0.5) {
+                System.out.println("All moves are bad, choosing one randomly");
+                selection = moves.get(new Random().nextInt(moves.size()));
+            } else {
+                List<MachineState> nextStates = sharedStateMachine.getNextStates(currRootNode.getState());
+                selection = jointMoveMap.get(bestChild.getState());
+            }
+        } else {
+            System.out.println("Unable to find best child with MCTS, choosing randomly");
+            selection = moves.get(new Random().nextInt(moves.size()));
         }
 
         long stop = System.currentTimeMillis();
