@@ -72,7 +72,7 @@ public class SamplePropNetStateMachine extends StateMachine {
                 comp.crystalize();
             }
             // find all latches
-            for (Component prop : props) {
+            for (Component prop : bases) {
                 checkLatch(prop);
             }
         } catch (InterruptedException e) {
@@ -231,8 +231,13 @@ public class SamplePropNetStateMachine extends StateMachine {
 
     private boolean isTrueLatch(Component comp, List<Component> upstreamProps, List<boolean[]> upstreamEnums) 
     {
-        for (boolean[] currEnum : upstreamEnums) {
-
+        for (int i = 0; i < upstreamEnums.size(); i++) {
+            boolean[] currEnum = upstreamEnums.get(i);
+            for (int j = 0; j < currEnum.length; j++) {
+                ((Proposition) upstreamProps.get(j)).setValue(currEnum[j]);
+            }
+            boolean result = propmarkp(comp.getSingleInput());
+            if (!result) return false;
         }
         return true;
     } 
@@ -251,7 +256,8 @@ public class SamplePropNetStateMachine extends StateMachine {
         // get all possible upstream enumerations
         List<boolean[]> upstreamEnums = getPossibleEnumerations(upstreamProps.size());
         // now enumerate over all upstream prop possible values and check if comp is true        
-        //boolean trueLatch = isTrueLatch(comp, upstreamProps, upstreamEnums);
+        boolean trueLatch = isTrueLatch(comp, upstreamProps, upstreamEnums);
+        LOG(comp + " is a true latch: " + trueLatch);
     }
 
 /* ----------------------| Functions from Ch 10 | --------------------------  */
@@ -300,7 +306,10 @@ public class SamplePropNetStateMachine extends StateMachine {
         else if (type == Component.CmpType.LEGAL_PROP)      marking = propmarkp(comp.getSingleInput());
         else if (type == Component.CmpType.GOAL_PROP)       marking = propmarkp(comp.getSingleInput());
         else if (type == Component.CmpType.TERMINAL_PROP)   marking = propmarkp(comp.getSingleInput());
-        else if (type == Component.CmpType.TRANSITION)      LOG("Found transition!");
+        else if (type == Component.CmpType.TRANSITION) {
+            //LOG("Found transition");
+            marking = propmarkp(comp.getSingleInput());
+        }    
         else if (type == Component.CmpType.UNSET)           LOG("Found unset!");
         return marking;
     }
